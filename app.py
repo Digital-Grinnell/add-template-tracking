@@ -116,7 +116,7 @@ def generate_folder_links(folder_path):
         ]
         
         # Rebuild the files_list showing selected files with a checkmark.
-        files_list = [ ]
+        files_list = [""]
         selected = state('selected_files')
 
         for file in files:
@@ -240,6 +240,8 @@ def clear_selected_files( ):
 # -----------------------------------------------------------------------------
 def line_open_and_close(filename, prefix):
 
+    tag_style = state('tag_style')
+
     path = filename
     if state('remove_path_levels'):
         num = state('remove_path_levels')
@@ -248,7 +250,15 @@ def line_open_and_close(filename, prefix):
         path = filename.replace(remove, '')    
 
     # Build the tags
-    tag1 = f"<!-- {prefix} {path} -->"
+    if tag_style == "Hugo":
+        tag1 = "{" + "{" + f" `<!-- {prefix}: {path} -->` | safeHTML " + "}" + "}"
+    elif tag_style == "Jekyll":
+        tag1 = f"<!-- {prefix}: {path} -->"
+    else:
+        tag1 = "Error! Unknown tag_style specified."
+        st.error(tag1)
+        logger.critical(tag1)
+
     tag2 = tag1.replace(prefix, "/" + prefix)
 
     # Assume frontmatter is present, wrap 'content' portion of file with tags
@@ -322,8 +332,10 @@ if __name__ == '__main__':
     if not state('show_hidden'):
         st.session_state.show_hidden = True
 
+    if not state('tag_style'):
+        st.session_state.tag_style = 'hugo'
     if not state('tag_prefix'):
-        st.session_state.tag_prefix = 'cb:'
+        st.session_state.tag_prefix = 'hugo'
     if not state('remove_path_levels'):
         st.session_state.remove_path_levels = 4
 
@@ -359,8 +371,11 @@ if __name__ == '__main__':
         if count:
             st.button(f"Clear Selected File List", help=f"Click here to clear your selected file list.", on_click=clear_selected_files)
 
-        # Tag prefix text (default is 'cb:')
-        st.session_state['tag_prefix'] = st.text_input(f"Prefix to apply inside tags", value='cb:')   
+        # Tag style, either Jekyll <!-- like this --> or Hugo {{ `<!-- like this -->` | safeHTML }}. Default is Hugo
+        st.session_state['tag_style'] = st.radio(f"Tag style", ['Hugo', 'Jekyll'])   
+
+        # Tag prefix text (default is 'hugo')
+        st.session_state['tag_prefix'] = st.text_input(f"Prefix to apply inside tags", value='hugo')   
 
         # Number of subdir levels to remove from paths (default is 4)
         st.session_state['remove_path_levels'] = st.number_input(f"Number of prefix subdirs to remove for relative paths", min_value=0, value=4)   
