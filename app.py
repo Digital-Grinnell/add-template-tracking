@@ -39,6 +39,8 @@ def get_subfolders_and_files(folder_path):
     try:
 
         regex = state('file_regex')
+        sorted_sub = [ ]
+        sorted_files = [ ]
 
         for item in os.listdir(folder_path):
             item_path = os.path.join(folder_path, item)
@@ -157,12 +159,18 @@ def update_from_crumb( ):
 
 def update_subdirs( ):
     # logger.info(f'subdirs is: {state('subdirs')}')
-    click = did_click(state("subdirs"), None)
-    # logger.warning(f'subdirs click is: {click}')
-    st.session_state["new_subfolder"] = click
-    if state("new_subfolder"):
+    if state('subdirs'):
+        click = did_click(state("subdirs"), None)
+        # logger.warning(f'subdirs click is: {click}')
+        st.session_state["new_subfolder"] = click
+        if state("new_subfolder"):
+            update_paths( )
+            st.session_state["run_again"] = True
+    else:
+        st.write(f"There are NO subdirectories to select from.")
         update_paths( )
         st.session_state["run_again"] = True
+
 
 def file_selected( ):
     # logger.info(f'files is: {state('files')}')
